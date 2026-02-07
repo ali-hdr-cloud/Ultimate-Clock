@@ -1,0 +1,8 @@
+{
+  "name": "Ultimate Clock",
+  "short_name": "Clock",
+  "start_url": "/index.html",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#000000"
+}
