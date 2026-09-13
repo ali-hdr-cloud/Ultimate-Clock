@@ -42,6 +42,10 @@ jobs:
         working-directory: elya_project
         run: python ../elya-fix/patch_elya_104.py
 
+      - name: Apply Elya 1.0.5 Google and phone auth
+        working-directory: elya_project
+        run: python ../elya-fix/patch_elya_105.py
+
       - name: Enable AndroidX for Firebase
         working-directory: elya_project
         run: |
@@ -54,14 +58,18 @@ jobs:
       - name: Validate patched files
         working-directory: elya_project
         run: |
-          grep -q "versionName '1.0.4'" app/build.gradle
+          grep -q "versionName '1.0.5'" app/build.gradle
           grep -q "com.google.gms.google-services" build.gradle
           grep -q "firebase-auth" app/build.gradle
           grep -q "firebase-firestore" app/build.gradle
-          grep -q "firebaseEmailSignIn" app/src/main/java/com/elya/music/MainActivity.java
-          grep -q "id=\"elyaAccount\"" app/src/main/assets/index.html
-          grep -q "id=\"elyaBoot\"" app/src/main/assets/index.html
+          grep -q "googleid:1.1.1" app/build.gradle
+          grep -q "firebaseGoogleSignIn" app/src/main/java/com/elya/music/MainActivity.java
+          grep -q "firebasePhoneSendCode" app/src/main/java/com/elya/music/MainActivity.java
+          grep -q "firebasePhoneVerifyCode" app/src/main/java/com/elya/music/MainActivity.java
+          grep -q "id=\"elyaGoogleSignIn\"" app/src/main/assets/index.html
+          grep -q "id=\"elyaPhoneVerify\"" app/src/main/assets/index.html
           grep -q '"package_name": "com.elya.music"' app/google-services.json
+          grep -q '"client_type": 3' app/google-services.json
           grep -q '^android.useAndroidX=true' gradle.properties
           test -f app/src/main/assets/elya-logo.png
 
@@ -94,19 +102,27 @@ jobs:
         with:
           gradle-version: '8.9'
 
-      - name: Build APK
+      - name: Build unsigned release APK
         working-directory: elya_project
-        run: gradle :app:assembleDebug --stacktrace
+        run: gradle :app:assembleRelease --stacktrace
 
-      - name: Prepare APK
+      - name: Prepare unsigned APK and signing tools
         run: |
-          cp elya_project/app/build/outputs/apk/debug/app-debug.apk Elya-1.0.4.apk
-          ls -lh Elya-1.0.4.apk
+          cp elya_project/app/build/outputs/apk/release/app-release-unsigned.apk Elya-1.0.5-unsigned.apk
+          BUILD_TOOLS=$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -n 1)
+          echo "Using Android build tools: $BUILD_TOOLS"
+          mkdir -p signing-tools/lib
+          cp "$BUILD_TOOLS/apksigner" signing-tools/apksigner
+          cp "$BUILD_TOOLS/lib/apksigner.jar" signing-tools/lib/apksigner.jar
+          chmod +x signing-tools/apksigner
+          ls -lh Elya-1.0.5-unsigned.apk signing-tools/apksigner signing-tools/lib/apksigner.jar
 
-      - name: Upload Elya APK
+      - name: Upload Elya unsigned APK and signer
         uses: actions/upload-artifact@v4
         with:
-          name: Elya-APK-1.0.4
-          path: Elya-1.0.4.apk
+          name: Elya-APK-1.0.5-unsigned
+          path: |
+            Elya-1.0.5-unsigned.apk
+            signing-tools
           if-no-files-found: error
           retention-days: 30
