@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "798148989936",
+    "project_id": "elya-music",
+    "storage_bucket": "elya-music.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:798148989936:android:0e2ad2055aa37849580335",
+        "android_client_info": {
+          "package_name": "com.elya.music"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBBsaUJjZTxCP52JMzmfshvXqr-4PKZBvw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
