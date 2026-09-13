@@ -34,14 +34,34 @@ jobs:
         working-directory: elya_project
         run: python ../elya-fix/patch_elya_102.py
 
+      - name: Apply Elya 1.0.3 premium UI
+        working-directory: elya_project
+        run: python ../elya-fix/patch_elya_103.py
+
       - name: Validate patched files
         working-directory: elya_project
         run: |
-          grep -q "versionName '1.0.2'" app/build.gradle
+          grep -q "versionName '1.0.3'" app/build.gradle
           grep -q "READ_MEDIA_AUDIO" app/src/main/AndroidManifest.xml
+          grep -q "android.permission.VIBRATE" app/src/main/AndroidManifest.xml
           grep -q "scanAllDeviceMusic" app/src/main/java/com/elya/music/MainActivity.java
-          grep -q "MediaStore.getExternalVolumeNames" app/src/main/java/com/elya/music/MainActivity.java
-          grep -q "__elyaNativePermissionFallback" app/src/main/assets/index.html
+          grep -q "deviceScanInProgress" app/src/main/java/com/elya/music/MainActivity.java
+          grep -q "ELYA 1.0.3 UI / LOADING / HAPTICS" app/src/main/assets/index.html
+          grep -q "id=\"elyaBoot\"" app/src/main/assets/index.html
+          test -f app/src/main/assets/elya-logo.png
+          test -f app/src/main/res/drawable/elya_launch_screen.xml
+
+      - name: Validate JavaScript syntax
+        working-directory: elya_project
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          h=Path('app/src/main/assets/index.html').read_text(encoding='utf-8')
+          scripts=re.findall(r'<script[^>]*>(.*?)</script>',h,flags=re.S|re.I)
+          Path('/tmp/elya.js').write_text('\n'.join(scripts),encoding='utf-8')
+          PY
+          node --check /tmp/elya.js
 
       - name: Set up Java 17
         uses: actions/setup-java@v4
@@ -66,13 +86,13 @@ jobs:
 
       - name: Prepare APK
         run: |
-          cp elya_project/app/build/outputs/apk/debug/app-debug.apk Elya-1.0.2.apk
-          ls -lh Elya-1.0.2.apk
+          cp elya_project/app/build/outputs/apk/debug/app-debug.apk Elya-1.0.3.apk
+          ls -lh Elya-1.0.3.apk
 
       - name: Upload Elya APK
         uses: actions/upload-artifact@v4
         with:
-          name: Elya-APK-1.0.2
-          path: Elya-1.0.2.apk
+          name: Elya-APK-1.0.3
+          path: Elya-1.0.3.apk
           if-no-files-found: error
           retention-days: 30
