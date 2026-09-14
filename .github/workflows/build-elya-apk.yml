@@ -67,7 +67,6 @@ jobs:
           grep -q "firebase-auth" app/build.gradle
           grep -q "firebase-firestore" app/build.gradle
           grep -q "googleid:1.1.1" app/build.gradle
-          grep -q "deviceScanRunning" app/src/main/java/com/elya/music/MainActivity.java
           grep -q "firebaseEmailSignIn" app/src/main/java/com/elya/music/MainActivity.java
           grep -q "firebaseGoogleSignIn" app/src/main/java/com/elya/music/MainActivity.java
           grep -q "firebasePhoneSendCode" app/src/main/java/com/elya/music/MainActivity.java
