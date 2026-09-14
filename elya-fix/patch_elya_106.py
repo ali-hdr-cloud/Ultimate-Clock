@@ -10,7 +10,7 @@ s = re.sub(r'versionCode\s+6\b', 'versionCode 7', s, count=1)
 s = re.sub(r"versionName\s+'1\.0\.5'", "versionName '1.0.6'", s, count=1)
 p.write_text(s, encoding='utf-8')
 
-# ---------- Native Android fixes ----------
+# ---------- Native Android auth fixes ----------
 p = r/'app/src/main/java/com/elya/music/MainActivity.java'
 s = p.read_text(encoding='utf-8')
 
@@ -18,23 +18,7 @@ if 'import com.google.firebase.auth.FirebaseAuthException;' not in s:
     s = s.replace('import com.google.firebase.auth.FirebaseAuth;',
                   'import com.google.firebase.auth.FirebaseAuth;\nimport com.google.firebase.auth.FirebaseAuthException;', 1)
 
-if 'private volatile boolean deviceScanRunning' not in s:
-    anchor = '    private PhoneAuthProvider.ForceResendingToken phoneResendToken;'
-    if anchor not in s:
-        raise SystemExit('phoneResendToken field anchor missing')
-    s = s.replace(anchor, anchor + '\n    private volatile boolean deviceScanRunning = false;\n    private volatile long lastDeviceScanFinishedAt = 0L;', 1)
-
-old_scan_start = '''    private void scanAllDeviceMusic() {\n        io.execute(() -> {\n            try {'''
-new_scan_start = '''    private void scanAllDeviceMusic() {\n        if (deviceScanRunning) {\n            js("window.__elyaNativeScanAlreadyRunning && window.__elyaNativeScanAlreadyRunning();");\n            return;\n        }\n        deviceScanRunning = true;\n        io.execute(() -> {\n            try {'''
-if old_scan_start not in s:
-    raise SystemExit('scanAllDeviceMusic start anchor missing')
-s = s.replace(old_scan_start, new_scan_start, 1)
-
-old_scan_end = '''            } catch (Exception e) {\n                js("window.__elyaNativeScanError && window.__elyaNativeScanError("\n                        + JSONObject.quote("Could not scan device music. You can still choose a folder manually.") + ");");\n            }\n        });\n    }\n\n    private boolean scanMediaCollection'''
-new_scan_end = '''            } catch (Exception e) {\n                js("window.__elyaNativeScanError && window.__elyaNativeScanError("\n                        + JSONObject.quote("Could not scan device music. You can still choose a folder manually.") + ");");\n            } finally {\n                deviceScanRunning = false;\n                lastDeviceScanFinishedAt = System.currentTimeMillis();\n                js("window.__elyaNativeScanFinished && window.__elyaNativeScanFinished();");\n            }\n        });\n    }\n\n    private boolean scanMediaCollection'''
-if old_scan_end not in s:
-    raise SystemExit('scanAllDeviceMusic end anchor missing')
-s = s.replace(old_scan_end, new_scan_end, 1)
+# Elya 1.0.3 already de-duplicates startup scans; keep the native scan path unchanged here.
 
 email_signup_pattern = re.compile(r'''        @JavascriptInterface public void firebaseEmailSignUp\(String email,String password\)\{.*?\}\n(?=        @JavascriptInterface public void firebaseEmailSignIn)''', re.S)
 email_signup_new = '''        @JavascriptInterface public void firebaseEmailSignUp(String email,String password){\n            String e=email==null?"":email.trim(),pw=password==null?"":password;\n            if(e.isEmpty()||pw.length()<6){emitFirebaseError("Use a valid email and a password with at least 6 characters.");return;}\n            emitFirebaseMessage("Creating Elya account...");\n            firebaseAuth.createUserWithEmailAndPassword(e,pw)\n                    .addOnSuccessListener(x->{\n                        FirebaseUser u=x.getUser();\n                        if(u==null){emitFirebaseError("Account was created but no user session was returned.");return;}\n                        emitFirebaseState(u,null);\n                        emitFirebaseMessage("Elya account created.");\n                        Map<String,Object>d=new HashMap<>();\n                        d.put("email",clean(u.getEmail()));d.put("displayName","Elya Listener");d.put("bio","");d.put("favoriteArtist","");\n                        d.put("createdAt",FieldValue.serverTimestamp());d.put("updatedAt",FieldValue.serverTimestamp());\n                        firestore.collection("users").document(u.getUid()).set(d,SetOptions.merge())\n                                .addOnSuccessListener(v->loadFirebaseProfile(u))\n                                .addOnFailureListener(err->emitFirebaseMessage("Signed in. Cloud profile sync will retry later."));\n                    })\n                    .addOnFailureListener(err->emitFirebaseError(firebaseFriendlyError(err)));\n        }\n'''
