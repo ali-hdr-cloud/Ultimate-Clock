@@ -26,10 +26,10 @@ jobs:
           unzip -q "$ZIP_FILE" -d elya_project
           echo "Using $ZIP_FILE"
 
-      - name: Apply Elya patches through 1.1.3
+      - name: Apply Elya patches through 1.1.4
         working-directory: elya_project
         run: |
-          for v in 101 102 103 104 105 106 107 108 109 110 111 112 113; do
+          for v in 101 102 103 104 105 106 107 108 109 110 111 112 113 114; do
             echo "Applying patch $v"
             python "../elya-fix/patch_elya_${v}.py"
           done
@@ -43,18 +43,19 @@ jobs:
             echo 'android.useAndroidX=true' >> gradle.properties
           fi
 
-      - name: Validate Elya 1.1.3
+      - name: Validate Elya 1.1.4
         working-directory: elya_project
         run: |
-          grep -q "versionName '1.1.3'" app/build.gradle
-          grep -q "versionCode 14" app/build.gradle
-          grep -q "ELYA_NATIVE_CORE_113" app/src/main/java/com/elya/music/MainActivity.java
-          grep -q "elya-bridge-1.1.3" app/src/main/java/com/elya/music/MainActivity.java
-          grep -q "__elyaPlaybackVersion='1.1.2'" app/src/main/assets/index.html
+          grep -q "versionName '1.1.4'" app/build.gradle
+          grep -q "versionCode 15" app/build.gradle
+          grep -q "ELYA_NATIVE_CORE_114" app/src/main/java/com/elya/music/MainActivity.java
+          grep -q "elya-bridge-1.1.4" app/src/main/java/com/elya/music/MainActivity.java
+          grep -q "__elyaPlaybackVersion='1.1.4'" app/src/main/assets/index.html
+          grep -q "__elyaMainRuntimeVersion='1.1.4'" app/src/main/assets/index.html
+          grep -q "elya114RuntimeGuard" app/src/main/assets/index.html
           grep -q "__elyaTouchVersion='1.1.3'" app/src/main/assets/index.html
           grep -q "DRAG_DEADZONE=24" app/src/main/assets/index.html
           grep -q "interactiveTarget" app/src/main/assets/index.html
-          grep -q "elya113TouchSafety" app/src/main/assets/index.html
           grep -q '<audio id="audio" crossorigin="anonymous"' app/src/main/assets/index.html
           grep -q "function songBase(input={})" app/src/main/assets/index.html
           grep -q "deepScanDeviceMusic" app/src/main/java/com/elya/music/MainActivity.java
@@ -64,7 +65,7 @@ jobs:
           grep -q '^android.useAndroidX=true' gradle.properties
           test -f app/src/main/assets/elya-logo.png
 
-      - name: Validate JavaScript syntax
+      - name: Validate JavaScript syntax and startup declaration order
         working-directory: elya_project
         run: |
           python - <<'PY'
@@ -73,6 +74,16 @@ jobs:
           h=Path('app/src/main/assets/index.html').read_text(encoding='utf-8')
           scripts=re.findall(r'<script[^>]*>(.*?)</script>',h,flags=re.S|re.I)
           Path('/tmp/elya.js').write_text('\n'.join(scripts),encoding='utf-8')
+          declaration="const audio=$('#audio'),preloadAudio=$('#preloadAudio');"
+          if h.count(declaration) != 1:
+              raise SystemExit(f'Expected one early audio/preload declaration, got {h.count(declaration)}')
+          if "const preloadAudio=$('#preloadAudio');" in h:
+              raise SystemExit('Late preloadAudio const declaration still exists')
+          decl_pos=h.index(declaration)
+          diag_pos=h.index("preloadAudio.crossOrigin='anonymous';")
+          if decl_pos >= diag_pos:
+              raise SystemExit('preloadAudio is still referenced before initialization')
+          print('Startup declaration order OK')
           PY
           node --check /tmp/elya.js
 
@@ -101,21 +112,21 @@ jobs:
 
       - name: Prepare unsigned APK and signing tools
         run: |
-          cp elya_project/app/build/outputs/apk/release/app-release-unsigned.apk Elya-1.1.3-unsigned.apk
+          cp elya_project/app/build/outputs/apk/release/app-release-unsigned.apk Elya-1.1.4-unsigned.apk
           BUILD_TOOLS=$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -n 1)
           echo "Using Android build tools: $BUILD_TOOLS"
           mkdir -p signing-tools/lib
           cp "$BUILD_TOOLS/apksigner" signing-tools/apksigner
           cp "$BUILD_TOOLS/lib/apksigner.jar" signing-tools/lib/apksigner.jar
           chmod +x signing-tools/apksigner
-          ls -lh Elya-1.1.3-unsigned.apk signing-tools/apksigner signing-tools/lib/apksigner.jar
+          ls -lh Elya-1.1.4-unsigned.apk signing-tools/apksigner signing-tools/lib/apksigner.jar
 
       - name: Upload Elya unsigned APK and signer
         uses: actions/upload-artifact@v4
         with:
-          name: Elya-APK-1.1.3-unsigned
+          name: Elya-APK-1.1.4-unsigned
           path: |
-            Elya-1.1.3-unsigned.apk
+            Elya-1.1.4-unsigned.apk
             signing-tools
           if-no-files-found: error
           retention-days: 30
