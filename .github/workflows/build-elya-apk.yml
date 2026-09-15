@@ -70,6 +70,10 @@ jobs:
         working-directory: elya_project
         run: python ../elya-fix/patch_elya_111.py
 
+      - name: Apply Elya 1.1.2 audio playback fix
+        working-directory: elya_project
+        run: python ../elya-fix/patch_elya_112.py
+
       - name: Enable AndroidX for Firebase
         working-directory: elya_project
         run: |
@@ -82,29 +86,31 @@ jobs:
       - name: Validate patched files
         working-directory: elya_project
         run: |
-          grep -q "versionName '1.1.1'" app/build.gradle
-          grep -q "versionCode 12" app/build.gradle
+          grep -q "versionName '1.1.2'" app/build.gradle
+          grep -q "versionCode 13" app/build.gradle
           grep -q "com.google.gms.google-services" build.gradle
           grep -q "firebase-auth" app/build.gradle
           grep -q "firebase-firestore" app/build.gradle
           grep -q "googleid:1.1.1" app/build.gradle
-          grep -q "ELYA_NATIVE_CORE_111" app/src/main/java/com/elya/music/MainActivity.java
-          grep -q "elya-bridge-1.1.1" app/src/main/java/com/elya/music/MainActivity.java
+          grep -q "ELYA_NATIVE_CORE_112" app/src/main/java/com/elya/music/MainActivity.java
+          grep -q "elya-bridge-1.1.2" app/src/main/java/com/elya/music/MainActivity.java
           grep -q "deepScanDeviceMusic" app/src/main/java/com/elya/music/MainActivity.java
           grep -q "scanPublicAudioFolders" app/src/main/java/com/elya/music/MainActivity.java
           grep -q "buildBasicAudioItem" app/src/main/java/com/elya/music/MainActivity.java
           grep -q "MediaStore.Files.getContentUri" app/src/main/java/com/elya/music/MainActivity.java
-          grep -q "PublicFolders" app/src/main/java/com/elya/music/MainActivity.java
+          grep -q "Cross-Origin-Resource-Policy" app/src/main/java/com/elya/music/MainActivity.java
+          grep -q "setAllowUniversalAccessFromFileURLs(true)" app/src/main/java/com/elya/music/MainActivity.java
           grep -q "elya110Pull" app/src/main/assets/index.html
           grep -q "atRealTop" app/src/main/assets/index.html
-          grep -q "q('.main')" app/src/main/assets/index.html
-          grep -q "elya110ScanModal" app/src/main/assets/index.html
           grep -q "Library Scan Center" app/src/main/assets/index.html
           grep -q "function songBase(input={})" app/src/main/assets/index.html
           grep -q "__elyaNativeLibraryReceiverVersion='1.1.1'" app/src/main/assets/index.html
+          grep -q "__elyaPlaybackVersion='1.1.2'" app/src/main/assets/index.html
+          grep -q '<audio id="audio" crossorigin="anonymous"' app/src/main/assets/index.html
+          grep -q '<audio id="preloadAudio" crossorigin="anonymous"' app/src/main/assets/index.html
+          grep -q "sourceNode.connect(audioCtx.destination)" app/src/main/assets/index.html
           grep -q "category: 'music'" app/src/main/assets/index.html
           grep -q "songs visible" app/src/main/assets/index.html
-          ! grep -q "id=\"elya109PullRefresh\"" app/src/main/assets/index.html
           grep -q "elya108SignOutConfirm" app/src/main/assets/index.html
           grep -q '"package_name": "com.elya.music"' app/google-services.json
           grep -q '"client_type": 3' app/google-services.json
@@ -148,21 +154,21 @@ jobs:
 
       - name: Prepare unsigned APK and signing tools
         run: |
-          cp elya_project/app/build/outputs/apk/release/app-release-unsigned.apk Elya-1.1.1-unsigned.apk
+          cp elya_project/app/build/outputs/apk/release/app-release-unsigned.apk Elya-1.1.2-unsigned.apk
           BUILD_TOOLS=$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -n 1)
           echo "Using Android build tools: $BUILD_TOOLS"
           mkdir -p signing-tools/lib
           cp "$BUILD_TOOLS/apksigner" signing-tools/apksigner
           cp "$BUILD_TOOLS/lib/apksigner.jar" signing-tools/lib/apksigner.jar
           chmod +x signing-tools/apksigner
-          ls -lh Elya-1.1.1-unsigned.apk signing-tools/apksigner signing-tools/lib/apksigner.jar
+          ls -lh Elya-1.1.2-unsigned.apk signing-tools/apksigner signing-tools/lib/apksigner.jar
 
       - name: Upload Elya unsigned APK and signer
         uses: actions/upload-artifact@v4
         with:
-          name: Elya-APK-1.1.1-unsigned
+          name: Elya-APK-1.1.2-unsigned
           path: |
-            Elya-1.1.1-unsigned.apk
+            Elya-1.1.2-unsigned.apk
             signing-tools
           if-no-files-found: error
           retention-days: 30
