@@ -1,0 +1,74 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    match /users/{uid} {
+      allow read, write: if signedIn() && request.auth.uid == uid;
+
+      match /blocks/{blockedUid} {
+        allow read, write: if signedIn() && request.auth.uid == uid;
+      }
+    }
+
+    match /profiles/{uid} {
+      allow read: if signedIn();
+      allow create, update: if signedIn() && request.auth.uid == uid;
+      allow delete: if signedIn() && request.auth.uid == uid;
+    }
+
+    match /usernames/{username} {
+      allow read: if signedIn();
+      allow create: if signedIn()
+                    && request.resource.data.uid == request.auth.uid;
+      allow update: if signedIn()
+                    && resource.data.uid == request.auth.uid
+                    && request.resource.data.uid == request.auth.uid;
+      allow delete: if signedIn()
+                    && resource.data.uid == request.auth.uid;
+    }
+
+    match /chats/{chatId} {
+      function isMember(data) {
+        return signedIn()
+               && data.participants is list
+               && data.participants.size() == 2
+               && request.auth.uid in data.participants;
+      }
+
+      allow read: if isMember(resource.data);
+      allow create: if isMember(request.resource.data);
+      allow update: if isMember(resource.data)
+                    && request.resource.data.participants == resource.data.participants;
+      allow delete: if false;
+
+      match /messages/{messageId} {
+        function chatData() {
+          return get(/databases/$(database)/documents/chats/$(chatId)).data;
+        }
+        function member() {
+          return signedIn()
+                 && chatData().participants is list
+                 && request.auth.uid in chatData().participants;
+        }
+        function otherUid() {
+          return chatData().participants[0] == request.auth.uid
+                 ? chatData().participants[1]
+                 : chatData().participants[0];
+        }
+
+        allow read: if member();
+        allow create: if member()
+                      && request.resource.data.senderId == request.auth.uid
+                      && request.resource.data.text is string
+                      && request.resource.data.text.size() > 0
+                      && request.resource.data.text.size() <= 4000
+                      && !exists(/databases/$(database)/documents/users/$(request.auth.uid)/blocks/$(otherUid()))
+                      && !exists(/databases/$(database)/documents/users/$(otherUid())/blocks/$(request.auth.uid));
+        allow update, delete: if false;
+      }
+    }
+  }
+}
