@@ -26,10 +26,10 @@ jobs:
           unzip -q "$ZIP_FILE" -d elya_project
           echo "Using $ZIP_FILE"
 
-      - name: Apply Elya patches through 1.2.1
+      - name: Apply Elya patches through 1.2.2
         working-directory: elya_project
         run: |
-          for v in 101 102 103 104 105 106 107 108 109 110 111 112 113 114 120 121 122; do
+          for v in 101 102 103 104 105 106 107 108 109 110 111 112 113 114 120 121 122 123; do
             echo "Applying patch $v"
             python "../elya-fix/patch_elya_${v}.py"
           done
@@ -43,28 +43,33 @@ jobs:
             echo 'android.useAndroidX=true' >> gradle.properties
           fi
 
-      - name: Validate Elya 1.2.1
+      - name: Validate Elya 1.2.2
         working-directory: elya_project
         run: |
-          grep -q "versionName '1.2.1'" app/build.gradle
-          grep -q "versionCode 17" app/build.gradle
-          grep -q "ELYA_NATIVE_CORE_121" app/src/main/java/com/elya/music/MainActivity.java
-          grep -q "elya-bridge-1.2.1" app/src/main/java/com/elya/music/MainActivity.java
+          grep -q "versionName '1.2.2'" app/build.gradle
+          grep -q "versionCode 18" app/build.gradle
+          grep -q "ELYA_NATIVE_CORE_123" app/src/main/java/com/elya/music/MainActivity.java
+          grep -q "elya-bridge-1.2.2" app/src/main/java/com/elya/music/MainActivity.java
           grep -q "scanLrcDocumentChildren" app/src/main/java/com/elya/music/MainActivity.java
           grep -q "readSiblingLrc" app/src/main/java/com/elya/music/MainActivity.java
           grep -q '_lyricsSource' app/src/main/java/com/elya/music/MainActivity.java
+          grep -q 'embeddedArt = readEmbeddedPicture(uri)' app/src/main/java/com/elya/music/MainActivity.java
+          grep -q 'artMime = "image/png"' app/src/main/java/com/elya/music/MainActivity.java
           grep -q "startsWith('elya-bridge-')" app/src/main/assets/index.html
           ! grep -q "if(ping==='elya-bridge-1.0.7')" app/src/main/assets/index.html
-          grep -q "__elyaStabilityVersion='1.2.1'" app/src/main/assets/index.html
+          grep -q "__elyaStabilityVersion='1.2.2'" app/src/main/assets/index.html
+          grep -q "__elyaInteractionVersion='1.2.2'" app/src/main/assets/index.html
+          grep -q "__elyaChatVersion='1.2.2'" app/src/main/assets/index.html
+          grep -q "__elyaSettingsVersion='1.2.2'" app/src/main/assets/index.html
+          grep -q "__elyaPlaybackVersion='1.2.2'" app/src/main/assets/index.html
+          grep -q "#settingsModal .elya120-setting-tabs" app/src/main/assets/index.html
+          ! grep -q "const tabs=\$('#settingsModal .tabs'),tab=" app/src/main/assets/index.html
           grep -q 'id="elya121RuntimeRecovery"' app/src/main/assets/index.html
           grep -q "nativeCover" app/src/main/assets/index.html
           grep -q "nativeLyrics" app/src/main/assets/index.html
           grep -q "lyrics: item.lyrics || ''" app/src/main/assets/index.html
-          grep -q "__elyaChatVersion='1.2.0'" app/src/main/assets/index.html
-          grep -q "__elyaSettingsVersion='1.2.0'" app/src/main/assets/index.html
           grep -q 'id="elyaChatsModal"' app/src/main/assets/index.html
           grep -q 'id="settingsModal"' app/src/main/assets/index.html
-          grep -q "__elyaPlaybackVersion='1.1.4'" app/src/main/assets/index.html
           grep -q "DRAG_DEADZONE=24" app/src/main/assets/index.html
           grep -q '<audio id="audio" crossorigin="anonymous"' app/src/main/assets/index.html
           grep -q "function songBase(input={})" app/src/main/assets/index.html
@@ -96,9 +101,13 @@ jobs:
               raise SystemExit('Chats or Settings modal duplicated/missing')
           if "if(ping==='elya-bridge-1.0.7')" in h:
               raise SystemExit('Stale native bridge exact-version check remains')
+          bad="const tabs=$('#settingsModal .tabs'),tab=document.createElement('button')"
+          good="const tabs=$('#settingsModal .elya120-setting-tabs')||$('#settingsModal .tabs')"
+          if bad in h or good not in h:
+              raise SystemExit('Settings Advanced tab compatibility regression')
           if h.count('id="elya121RuntimeRecovery"') != 1:
               raise SystemExit('Runtime recovery missing/duplicated')
-          print('Elya 1.2.1 runtime structure OK')
+          print('Elya 1.2.2 runtime structure OK')
           PY
           node --check /tmp/elya.js
 
@@ -127,21 +136,21 @@ jobs:
 
       - name: Prepare unsigned APK and signing tools
         run: |
-          cp elya_project/app/build/outputs/apk/release/app-release-unsigned.apk Elya-1.2.1-unsigned.apk
+          cp elya_project/app/build/outputs/apk/release/app-release-unsigned.apk Elya-1.2.2-unsigned.apk
           BUILD_TOOLS=$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -n 1)
           echo "Using Android build tools: $BUILD_TOOLS"
           mkdir -p signing-tools/lib
           cp "$BUILD_TOOLS/apksigner" signing-tools/apksigner
           cp "$BUILD_TOOLS/lib/apksigner.jar" signing-tools/lib/apksigner.jar
           chmod +x signing-tools/apksigner
-          ls -lh Elya-1.2.1-unsigned.apk signing-tools/apksigner signing-tools/lib/apksigner.jar
+          ls -lh Elya-1.2.2-unsigned.apk signing-tools/apksigner signing-tools/lib/apksigner.jar
 
       - name: Upload Elya unsigned APK and signer
         uses: actions/upload-artifact@v4
         with:
-          name: Elya-APK-1.2.1-unsigned
+          name: Elya-APK-1.2.2-unsigned
           path: |
-            Elya-1.2.1-unsigned.apk
+            Elya-1.2.2-unsigned.apk
             signing-tools
           if-no-files-found: error
           retention-days: 30
