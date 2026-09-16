@@ -26,10 +26,10 @@ jobs:
           unzip -q "$ZIP_FILE" -d elya_project
           echo "Using $ZIP_FILE"
 
-      - name: Apply Elya patches through 1.3.0
+      - name: Apply Elya patches through 1.3.1
         working-directory: elya_project
         run: |
-          for v in 101 102 103 104 105 106 107 108 109 110 111 112 113 114 120 121 122 123 130 131; do
+          for v in 101 102 103 104 105 106 107 108 109 110 111 112 113 114 120 121 122 123 130 131 132; do
             echo "Applying patch $v"
             python "../elya-fix/patch_elya_${v}.py"
           done
@@ -43,30 +43,33 @@ jobs:
             echo 'android.useAndroidX=true' >> gradle.properties
           fi
 
-      - name: Validate Elya 1.3.0
+      - name: Validate Elya 1.3.1
         working-directory: elya_project
         run: |
-          grep -q "versionName '1.3.0'" app/build.gradle
-          grep -q "versionCode 19" app/build.gradle
+          grep -q "versionName '1.3.1'" app/build.gradle
+          grep -q "versionCode 20" app/build.gradle
           grep -q "firebase-storage" app/build.gradle
           grep -q 'android.permission.RECORD_AUDIO' app/src/main/AndroidManifest.xml
-          grep -q "ELYA_NATIVE_CORE_130" app/src/main/java/com/elya/music/MainActivity.java
-          grep -q "elya-bridge-1.3.0" app/src/main/java/com/elya/music/MainActivity.java
+          grep -q "ELYA_NATIVE_CORE_132" app/src/main/java/com/elya/music/MainActivity.java
+          grep -q "elya-bridge-1.3.1" app/src/main/java/com/elya/music/MainActivity.java
           grep -q "chatReact" app/src/main/java/com/elya/music/MainActivity.java
           grep -q "chatCreateGroup" app/src/main/java/com/elya/music/MainActivity.java
           grep -q "chatPickMedia" app/src/main/java/com/elya/music/MainActivity.java
           grep -q "chatStartVoice" app/src/main/java/com/elya/music/MainActivity.java
           grep -q "FirebaseStorage" app/src/main/java/com/elya/music/MainActivity.java
-          grep -q "MediaRecorder" app/src/main/java/com/elya/music/MainActivity.java
-          grep -q "__elyaSocialVersion='1.3.0'" app/src/main/assets/index.html
+          grep -q "putStream(uploadStream)" app/src/main/java/com/elya/music/MainActivity.java
+          grep -q "chatStorageFriendlyError" app/src/main/java/com/elya/music/MainActivity.java
+          grep -q "Cloud media needs Firebase Blaze" app/src/main/java/com/elya/music/MainActivity.java
+          grep -q "__elyaSocialVersion='1.3.1'" app/src/main/assets/index.html
+          grep -q "__elyaFullscreenChatVersion='1.3.1'" app/src/main/assets/index.html
+          grep -q 'id="elya131FullscreenChatStyle"' app/src/main/assets/index.html
+          grep -q 'id="elya131FullscreenChatScript"' app/src/main/assets/index.html
+          grep -q '#elyaChatsModal>.dialog' app/src/main/assets/index.html
           grep -q 'id="elyaGroupModal"' app/src/main/assets/index.html
           grep -q 'id="elyaReactionPicker"' app/src/main/assets/index.html
           grep -q 'id="elyaChatAttach"' app/src/main/assets/index.html
           grep -q 'id="elyaChatVoice"' app/src/main/assets/index.html
-          grep -q 'id="i-react-heart"' app/src/main/assets/index.html
-          grep -q "__elyaChatVersion='1.3.0'" app/src/main/assets/index.html
-          grep -q "__elyaSettingsVersion='1.3.0'" app/src/main/assets/index.html
-          grep -q "__elyaPlaybackVersion='1.3.0'" app/src/main/assets/index.html
+          grep -q "__elyaChatVersion='1.3.1'" app/src/main/assets/index.html
           grep -q "#settingsModal .elya120-setting-tabs" app/src/main/assets/index.html
           ! grep -q "const tabs=\$('#settingsModal .tabs'),tab=" app/src/main/assets/index.html
           grep -q "nativeCover" app/src/main/assets/index.html
@@ -96,7 +99,7 @@ jobs:
               raise SystemExit('Late preloadAudio const declaration still exists')
           if h.index(declaration) >= h.index("preloadAudio.crossOrigin='anonymous';"):
               raise SystemExit('preloadAudio is referenced before initialization')
-          for marker in ['id="elyaChatsModal"','id="settingsModal"','id="elyaGroupModal"','id="elyaReactionPicker"','id="elya130SocialScript"']:
+          for marker in ['id="elyaChatsModal"','id="settingsModal"','id="elyaGroupModal"','id="elyaReactionPicker"','id="elya130SocialScript"','id="elya131FullscreenChatScript"']:
               if h.count(marker) != 1:
                   raise SystemExit(f'Missing or duplicated: {marker}')
           if "if(ping==='elya-bridge-1.0.7')" in h:
@@ -105,9 +108,9 @@ jobs:
           good="const tabs=$('#settingsModal .elya120-setting-tabs')||$('#settingsModal .tabs')"
           if bad in h or good not in h:
               raise SystemExit('Settings tab compatibility regression')
-          if "window.__elyaSocialVersion='1.3.0'" not in h:
-              raise SystemExit('Social runtime marker missing')
-          print('Elya 1.3.0 runtime structure OK')
+          if "window.__elyaSocialVersion='1.3.1'" not in h or "window.__elyaFullscreenChatVersion='1.3.1'" not in h:
+              raise SystemExit('1.3.1 runtime markers missing')
+          print('Elya 1.3.1 runtime structure OK')
           PY
           node --check /tmp/elya.js
 
@@ -136,21 +139,21 @@ jobs:
 
       - name: Prepare unsigned APK and signing tools
         run: |
-          cp elya_project/app/build/outputs/apk/release/app-release-unsigned.apk Elya-1.3.0-unsigned.apk
+          cp elya_project/app/build/outputs/apk/release/app-release-unsigned.apk Elya-1.3.1-unsigned.apk
           BUILD_TOOLS=$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -n 1)
           echo "Using Android build tools: $BUILD_TOOLS"
           mkdir -p signing-tools/lib
           cp "$BUILD_TOOLS/apksigner" signing-tools/apksigner
           cp "$BUILD_TOOLS/lib/apksigner.jar" signing-tools/lib/apksigner.jar
           chmod +x signing-tools/apksigner
-          ls -lh Elya-1.3.0-unsigned.apk signing-tools/apksigner signing-tools/lib/apksigner.jar
+          ls -lh Elya-1.3.1-unsigned.apk signing-tools/apksigner signing-tools/lib/apksigner.jar
 
       - name: Upload Elya unsigned APK and signer
         uses: actions/upload-artifact@v4
         with:
-          name: Elya-APK-1.3.0-unsigned
+          name: Elya-APK-1.3.1-unsigned
           path: |
-            Elya-1.3.0-unsigned.apk
+            Elya-1.3.1-unsigned.apk
             signing-tools
           if-no-files-found: error
           retention-days: 30
