@@ -23,15 +23,23 @@ service cloud.firestore {
     }
 
     match /chats/{chatId} {
+      // Keep reads query-compatible: the app queries with
+      // whereArrayContains("participants", request.auth.uid).
+      // Do not add participant-count checks here, because Firestore rules are
+      // not filters and those extra constraints can make the whole query fail.
       function member(data) {
-        return signedIn()
-          && data.participants is list
+        return signedIn() && request.auth.uid in data.participants;
+      }
+
+      function validParticipantList(data) {
+        return data.participants is list
           && data.participants.size() >= 2
           && data.participants.size() <= 50
           && request.auth.uid in data.participants;
       }
+
       function validCreate(data) {
-        return member(data) && (
+        return validParticipantList(data) && (
           ((!('type' in data) || data.type == 'direct') && data.participants.size() == 2)
           ||
           (('type' in data) && data.type == 'group'
@@ -55,7 +63,7 @@ service cloud.firestore {
 
       match /messages/{messageId} {
         function chatData() { return get(/databases/$(database)/documents/chats/$(chatId)).data; }
-        function isMember() { return signedIn() && chatData().participants is list && request.auth.uid in chatData().participants; }
+        function isMember() { return signedIn() && request.auth.uid in chatData().participants; }
         function isGroup() { return ('type' in chatData()) && chatData().type == 'group'; }
         function otherUid() { return chatData().participants[0] == request.auth.uid ? chatData().participants[1] : chatData().participants[0]; }
         function validKind(data) {
