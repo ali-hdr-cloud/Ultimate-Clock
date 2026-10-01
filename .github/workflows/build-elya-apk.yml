@@ -109,7 +109,7 @@ jobs:
         if: always()
         working-directory: elya_project
         run: |
-          python - <<'PY'
+          python - <<'PY' > /tmp/elya140-structure.log 2>&1
           from pathlib import Path
           h=Path('app/src/main/assets/index.html').read_text(encoding='utf-8')
           for marker in ['id="elyaChatsModal"','id="settingsModal"','id="elyaGroupModal"','id="elyaReactionPicker"','id="elya130SocialScript"','id="elya140NotificationsScript"','id="elyaChatShortcut"','id="elyaChatShortcutBadge"']:
@@ -121,6 +121,17 @@ jobs:
           print('staleBridge=', "if(ping==='elya-bridge-1.0.7')" in h)
           print('attach=', 'id="elyaChatAttach"' in h, 'voice=', 'id="elyaChatVoice"' in h, 'voiceBar=', 'id="elyaVoiceBar"' in h)
           PY
+          cat /tmp/elya140-structure.log
+          cp /tmp/elya140-structure.log ../elya140-structure.log
+
+      - name: Upload Elya 1.4.0 structure debug log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Elya-1.4.0-structure-debug
+          path: elya140-structure.log
+          if-no-files-found: ignore
+          retention-days: 7
 
       - name: Validate JavaScript syntax and runtime structure
         working-directory: elya_project
