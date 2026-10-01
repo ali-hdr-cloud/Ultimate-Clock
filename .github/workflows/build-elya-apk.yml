@@ -136,7 +136,21 @@ jobs:
               raise SystemExit('Media/voice UI must remain disabled in 1.4.0')
           print('Elya 1.4.0 runtime structure OK')
           PY
-          node --check /tmp/elya.js
+          set +e
+          node --check /tmp/elya.js > /tmp/elya-js-check.log 2>&1
+          JS_STATUS=$?
+          cat /tmp/elya-js-check.log
+          cp /tmp/elya-js-check.log ../elya-js-check.log
+          if [ "$JS_STATUS" -ne 0 ]; then exit "$JS_STATUS"; fi
+
+      - name: Upload Elya JS debug log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Elya-1.4.0-js-debug
+          path: elya-js-check.log
+          if-no-files-found: ignore
+          retention-days: 7
 
       - name: Set up Java 17
         uses: actions/setup-java@v4
