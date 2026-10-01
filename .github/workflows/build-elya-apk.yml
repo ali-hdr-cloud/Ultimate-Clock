@@ -105,6 +105,23 @@ jobs:
           grep -q 'match /chat-media/' ../elya-firebase/storage.rules
           test -f app/src/main/assets/elya-logo.png
 
+      - name: Debug Elya 1.4.0 JS structure
+        if: always()
+        working-directory: elya_project
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          h=Path('app/src/main/assets/index.html').read_text(encoding='utf-8')
+          for marker in ['id="elyaChatsModal"','id="settingsModal"','id="elyaGroupModal"','id="elyaReactionPicker"','id="elya130SocialScript"','id="elya140NotificationsScript"','id="elyaChatShortcut"','id="elyaChatShortcutBadge"']:
+              print(marker, 'COUNT=', h.count(marker))
+          print('social140=', "window.__elyaSocialVersion='1.4.0'" in h)
+          print('fullscreen131=', "window.__elyaFullscreenChatVersion='1.3.1'" in h)
+          print('badSettings=', "const tabs=\$('#settingsModal .tabs'),tab=document.createElement('button')" in h)
+          print('goodSettings=', "const tabs=\$('#settingsModal .elya120-setting-tabs')||\$('#settingsModal .tabs')" in h)
+          print('staleBridge=', "if(ping==='elya-bridge-1.0.7')" in h)
+          print('attach=', 'id="elyaChatAttach"' in h, 'voice=', 'id="elyaChatVoice"' in h, 'voiceBar=', 'id="elyaVoiceBar"' in h)
+          PY
+
       - name: Validate JavaScript syntax and runtime structure
         working-directory: elya_project
         run: |
