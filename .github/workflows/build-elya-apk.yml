@@ -29,10 +29,28 @@ jobs:
       - name: Apply Elya patches through 1.4.0
         working-directory: elya_project
         run: |
-          for v in 101 102 103 104 105 106 107 108 109 110 111 112 113 114 120 121 122 123 130 131 132 140; do
+          for v in 101 102 103 104 105 106 107 108 109 110 111 112 113 114 120 121 122 123 130 131 132; do
             echo "Applying patch $v"
             python "../elya-fix/patch_elya_${v}.py"
           done
+          set +e
+          python "../elya-fix/patch_elya_140.py" > /tmp/elya140-patch.log 2>&1
+          STATUS=$?
+          cat /tmp/elya140-patch.log
+          cp /tmp/elya140-patch.log ../elya140-patch.log
+          if [ "$STATUS" -ne 0 ]; then
+            echo "Elya 1.4.0 patch failed"
+            exit "$STATUS"
+          fi
+
+      - name: Upload Elya 1.4.0 patch debug log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Elya-1.4.0-patch-debug
+          path: elya140-patch.log
+          if-no-files-found: ignore
+          retention-days: 7
 
       - name: Enable AndroidX for Firebase
         working-directory: elya_project
