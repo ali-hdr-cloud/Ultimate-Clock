@@ -16,7 +16,7 @@ m = p.read_text(encoding='utf-8')
 if 'android.permission.POST_NOTIFICATIONS' not in m:
     anchor = '    <uses-permission android:name="android.permission.INTERNET" />'
     if anchor not in m:
-    print("WARNING: Elya 1.4.0 patch anchor not found; continuing.")
+        print("WARNING: Elya 1.4.0 patch anchor not found; continuing.")
     m = m.replace(anchor, anchor + '\n    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />', 1)
 m = m.replace('    <uses-permission android:name="android.permission.RECORD_AUDIO" />\n', '')
 p.write_text(m, encoding='utf-8')
