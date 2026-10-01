@@ -319,7 +319,7 @@ p = r / 'app/src/main/assets/index.html'
 h = p.read_text(encoding='utf-8')
 
 # Simple text-only composer.
-old_composer = re.compile(r'<div class="elya130-transfer" id="elyaChatTransfer" hidden></div><div class="elya130-recording" id="elyaVoiceBar" hidden>.*?</div><div class="elya120-composer elya130-composer">.*?</div>', re.S)
+old_composer = re.compile(r'<div class="elya130-transfer" id="elyaChatTransfer" hidden></div><div class="elya130-recording" id="elyaVoiceBar" hidden>.*?</div><div class="elya120-composer elya130-composer">.*?<button class="primary" id="elyaChatSend" type="button">.*?</button></div>', re.S)
 new_composer = '<div class="elya120-composer elya140-text-composer"><textarea id="elyaChatInput" rows="1" maxlength="4000" placeholder="Message"></textarea><button class="primary" id="elyaChatSend" type="button"><svg><use href="#i-up"/></svg></button></div>'
 h, n = old_composer.subn(new_composer, h, count=1)
 if n != 1:
