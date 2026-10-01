@@ -330,7 +330,7 @@ anchor = '<button class="icon-btn" id="queueBtn" title="Queue"><svg><use href="#
 shortcut = '<button class="icon-btn elya140-chat-shortcut" id="elyaChatShortcut" title="Chats" aria-label="Chats"><svg><use href="#i-chat"/></svg><span class="elya140-chat-badge" id="elyaChatShortcutBadge"></span></button>'
 if 'id="elyaChatShortcut"' not in h:
     if anchor not in h:
-    print("WARNING: Elya 1.4.0 patch anchor not found; continuing.")
+        print("WARNING: Elya 1.4.0 patch anchor not found; continuing.")
     h = h.replace(anchor, anchor + shortcut, 1)
 
 # Version markers.
