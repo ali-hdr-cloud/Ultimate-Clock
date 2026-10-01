@@ -4,6 +4,7 @@ import re
 r = Path('.')
 
 # Elya 1.4.0
+# Social cleanup: text-only chat + native notifications + chat shortcut
 p = r / 'app/build.gradle'
 s = p.read_text(encoding='utf-8')
 s = re.sub(r'versionCode\s+20\b', 'versionCode 21', s, count=1)
