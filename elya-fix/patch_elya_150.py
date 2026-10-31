@@ -4,9 +4,9 @@ import re
 root = Path('.')
 gradle = root / 'app/build.gradle'
 g = gradle.read_text(encoding='utf-8')
-if "versionName '1.4.0'" not in g or not re.search(r'versionCode\\s+21\\b', g):
+if "versionName '1.4.0'" not in g or not re.search(r'versionCode\s+21\b', g):
     raise SystemExit('Elya 1.4.0 version anchor missing; refusing unsafe version bump')
-g = re.sub(r'versionCode\\s+21\\b', 'versionCode 22', g, count=1)
+g = re.sub(r'versionCode\s+21\b', 'versionCode 22', g, count=1)
 g = g.replace("versionName '1.4.0'", "versionName '1.5.0'", 1)
 gradle.write_text(g, encoding='utf-8')
 
