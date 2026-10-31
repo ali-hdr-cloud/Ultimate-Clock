@@ -161,7 +161,7 @@ jobs:
           good="const tabs=$('#settingsModal .elya120-setting-tabs')||$('#settingsModal .tabs')"
           if bad in h or good not in h:
               raise SystemExit('Settings tab compatibility regression')
-          if "window.__elyaSocialVersion='1.4.0'" not in h or "window.__elyaFullscreenChatVersion='1.3.1'" not in h:
+          if "window.__elyaSocialVersion='1.5.0'" not in h or "window.__elyaFullscreenChatVersion='1.3.1'" not in h:
               raise SystemExit('runtime markers missing')
           if 'id="elyaChatAttach"' in h or 'id="elyaChatVoice"' in h or 'id="elyaVoiceBar"' in h:
               raise SystemExit('Media/voice UI must remain disabled in 1.4.0')
