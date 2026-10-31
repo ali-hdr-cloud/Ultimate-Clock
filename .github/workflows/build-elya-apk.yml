@@ -215,14 +215,14 @@ jobs:
           cp "$BUILD_TOOLS/apksigner" signing-tools/apksigner
           cp "$BUILD_TOOLS/lib/apksigner.jar" signing-tools/lib/apksigner.jar
           chmod +x signing-tools/apksigner
-          ls -lh Elya-1.4.0-unsigned.apk signing-tools/apksigner signing-tools/lib/apksigner.jar
+          ls -lh Elya-1.5.0-unsigned.apk signing-tools/apksigner signing-tools/lib/apksigner.jar
 
       - name: Upload Elya 1.5.0 unsigned APK and signer
         uses: actions/upload-artifact@v4
         with:
           name: Elya-APK-1.5.0-unsigned
           path: |
-            Elya-1.4.0-unsigned.apk
+            Elya-1.5.0-unsigned.apk
             signing-tools
           if-no-files-found: error
           retention-days: 30
