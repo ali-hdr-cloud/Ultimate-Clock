@@ -68,7 +68,7 @@ jobs:
           grep -q "versionName '1.5.0'" app/build.gradle
           grep -q "versionCode 22" app/build.gradle
           grep -q "elya150ChatRepair" app/src/main/assets/index.html
-          grep -q "elya150-composer" app/src/main/assets/index.html
+          grep -q ".elya120-composer" app/src/main/assets/index.html
           ! grep -q 'android.permission.RECORD_AUDIO' app/src/main/AndroidManifest.xml
           grep -q "ELYA_NATIVE_CORE_140" app/src/main/java/com/elya/music/MainActivity.java
           grep -q "elya-bridge-1.4.0" app/src/main/java/com/elya/music/MainActivity.java
